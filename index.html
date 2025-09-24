@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Nuvei WebSDK 2.0 – Manual Session Test</title>
+  <script src="https://cdn.safecharge.com/safecharge_resources/v1/websdk/websdk2.0.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: 30px auto; }
+    .input { border: 1px solid #ccc; padding: 6px; min-height: 32px; }
+    label { display:block; margin-top:12px; }
+    button { margin-top:20px; padding:8px 16px; }
+  </style>
+</head>
+<body>
+
+  <h2>Nuvei WebSDK 2.0 Test</h2>
+
+  <!-- Enter the sessionId you got from POST /orders -->
+  <label>Session ID (from /orders)
+    <input type="text" id="sessionId" placeholder="paste sessionId here">
+  </label>
+
+  <label>Card Holder Name
+    <input type="text" id="cardHolderName" value="CL-BRW1">
+  </label>
+
+  <label>Card Number
+    <div id="card-number" class="input"></div>
+  </label>
+
+  <label>Expiration Date
+    <div id="card-expiry" class="input"></div>
+  </label>
+
+  <label>CVV
+    <div id="card-cvc" class="input"></div>
+  </label>
+
+  <button onclick="initSDK()">Init SDK</button>
+  <button onclick="payment()">Submit Payment</button>
+
+  <script>
+    let nuveiWebSDK;
+
+    function initSDK() {
+      const sId = document.getElementById('sessionId').value.trim();
+      if (!sId) return alert('Paste a sessionId first');
+
+      // Instantiate WebSDK 2.0
+      nuveiWebSDK = webSDK({
+        env: 'int',                    // 'int' = sandbox
+        sessionId: sId,
+        support19Digits: true,
+        alwaysCollectCvv: 'optional',
+        onResult: res => console.log('onResult callback:', res)
+      });
+
+      // Activate Fields 2.0
+      const nuveiFields = nuveiWebSDK.fields({ locale: 'US' });
+      const fieldClasses = { base: 'input' };
+
+      const cardNumber = nuveiFields.create('ccNumber', { classes: fieldClasses });
+      cardNumber.attach('#card-number');
+
+      const cardExpiry = nuveiFields.create('ccExpiration', { classes: fieldClasses });
+      cardExpiry.attach('#card-expiry');
+
+      const cardCvc = nuveiFields.create('ccCvc', { classes: fieldClasses });
+      cardCvc.attach('#card-cvc');
+
+      console.log('Nuvei SDK initialized with session:', sId);
+    }
+
+    function payment() {
+      if (!nuveiWebSDK) return alert('Initialize SDK first');
+
+      nuveiWebSDK.payment({
+        paymentOption: {
+          card: {
+            cardHolderName: document.getElementById('cardHolderName').value
+          }
+        },
+        useFields: ['ccNumber', 'ccExpiration', 'ccCvc']
+      })
+      .then(res => console.log('Payment response:', res))
+      .catch(err => console.error('Payment error:', err));
+    }
+  </script>
+
+</body>
+</html>

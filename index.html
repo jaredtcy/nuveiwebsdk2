@@ -2,111 +2,111 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Nuvei WebSDK 2.0 – Debug Test</title>
+  <title>Nuvei WebSDK 2.0 – Manual Session Test</title>
+  
+  <!-- Include Nuvei WebSDK 2.0 -->
   <script src="https://cdn.safecharge.com/safecharge_resources/v1/websdk/websdk2.0.js"></script>
+
   <style>
     body { font-family: sans-serif; max-width: 500px; margin: 30px auto; }
     .input { border: 1px solid #ccc; padding: 6px; min-height: 32px; margin:4px 0; }
     label { display:block; margin-top:12px; }
-    button { margin-top:20px; padding:8px 16px; }
+    button { margin-top:12px; padding:8px 16px; cursor:pointer; }
+    #logs { margin-top:20px; font-size:14px; white-space:pre-wrap; background:#f9f9f9; padding:10px; border:1px solid #ddd; }
   </style>
 </head>
 <body>
 
-<h2>Nuvei WebSDK 2.0 Debug Test</h2>
+  <h2>Nuvei WebSDK 2.0 Test</h2>
 
-<label>Session ID (from /orders)
-  <input type="text" id="sessionId" placeholder="paste sessionId here">
-</label>
+  <label>Session ID (from /orders)
+    <input type="text" id="sessionId" placeholder="Paste sessionId here" style="width:100%; padding:6px;">
+  </label>
 
-<label>Card Holder Name
-  <input type="text" id="cardHolderName" value="CL-BRW1">
-</label>
+  <label>Card Holder Name
+    <input type="text" id="cardHolderName" value="CL-BRW1" style="width:100%; padding:6px;">
+  </label>
 
-<label>Card Number
-  <div id="card-number" class="input"></div>
-</label>
+  <label>Card Number
+    <div id="card-number" class="input"></div>
+  </label>
 
-<label>Expiration Date
-  <div id="card-expiry" class="input"></div>
-</label>
+  <label>Expiration Date
+    <div id="card-expiry" class="input"></div>
+  </label>
 
-<label>CVV
-  <div id="card-cvc" class="input"></div>
-</label>
+  <label>CVV
+    <div id="card-cvc" class="input"></div>
+  </label>
 
-<button id="initBtn" onclick="initSDK()">Init SDK</button>
-<button id="submitBtn" onclick="payment()" disabled>Submit Payment</button>
+  <button id="initBtn">Init SDK</button>
+  <button id="submitBtn" disabled>Submit Payment</button>
 
-<script>
-let nuveiWebSDK;
+  <div id="logs"></div>
 
-function initSDK() {
-  const sId = document.getElementById('sessionId').value.trim();
-  if (!sId) return alert('Paste a sessionId first');
+  <script>
+    let nuveiWebSDK;
+    let debugFields = {};
+    const logDiv = document.getElementById('logs');
 
-  console.log('Initializing Nuvei SDK with session:', sId);
+    function log(msg) {
+      console.log(msg);
+      logDiv.textContent += msg + "\n";
+    }
 
-  nuveiWebSDK = webSDK({
-    env: 'int',
-    sessionId: sId,
-    debug: true, // verbose logging
-    onResult: res => console.log('onResult callback:', res)
-  });
+    // Init SDK
+    document.getElementById('initBtn').addEventListener('click', () => {
+      const sessionId = document.getElementById('sessionId').value.trim();
+      if (!sessionId) return alert('Paste a sessionId first');
 
-  const nuveiFields = nuveiWebSDK.fields({ locale: 'US' });
-  const fieldClasses = { base: 'input' };
+      log('Initializing Nuvei SDK with session: ' + sessionId);
 
-  // Create fields
-  const cardNumber = nuveiFields.create('ccNumber', { classes: fieldClasses });
-  const cardExpiry = nuveiFields.create('ccExpiration', { classes: fieldClasses });
-  const cardCvc = nuveiFields.create('ccCvc', { classes: fieldClasses });
+      nuveiWebSDK = webSDK({
+        env: 'int',
+        sessionId: sessionId,
+        debug: true,
+        onResult: res => log('onResult callback: ' + JSON.stringify(res))
+      });
 
-  // Attach fields
-  cardNumber.attach('#card-number');
-  cardExpiry.attach('#card-expiry');
-  cardCvc.attach('#card-cvc');
+      const fields = nuveiWebSDK.fields({ locale: 'US' });
+      const fieldClasses = { base: 'input' };
 
-  // Save field references for debugging
-  window.debugFields = { cardNumber, cardExpiry, cardCvc };
+      // Create and attach fields
+      debugFields.cardNumber = fields.create('ccNumber', { classes: fieldClasses });
+      debugFields.cardNumber.attach('#card-number');
+      debugFields.cardNumber.on('change', state => log('ccNumber change: ' + JSON.stringify(state)));
 
-  // Add change listeners to see input captured by SDK
-  cardNumber.on('change', state => console.log('ccNumber change event:', state));
-  cardExpiry.on('change', state => console.log('ccExpiration change event:', state));
-  cardCvc.on('change', state => console.log('ccCvc change event:', state));
+      debugFields.cardExpiry = fields.create('ccExpiration', { classes: fieldClasses });
+      debugFields.cardExpiry.attach('#card-expiry');
+      debugFields.cardExpiry.on('change', state => log('ccExpiration change: ' + JSON.stringify(state)));
 
-  // Verify DOM attachment
-  console.log('DOM elements after attach:');
-  console.log('card-number div:', document.getElementById('card-number'));
-  console.log('card-expiry div:', document.getElementById('card-expiry'));
-  console.log('card-cvc div:', document.getElementById('card-cvc'));
+      debugFields.cardCvc = fields.create('ccCvc', { classes: fieldClasses });
+      debugFields.cardCvc.attach('#card-cvc');
+      debugFields.cardCvc.on('change', state => log('ccCvc change: ' + JSON.stringify(state)));
 
-  // Enable Submit button after SDK init
-  document.getElementById('submitBtn').disabled = false;
+      // Enable Submit button
+      document.getElementById('submitBtn').disabled = false;
+      log('SDK initialized. Submit button enabled.');
+    });
 
-  console.log('Nuvei SDK initialized successfully. Submit button enabled.');
-}
+    // Payment
+    document.getElementById('submitBtn').addEventListener('click', () => {
+      if (!nuveiWebSDK) return alert('Initialize SDK first');
 
-function payment() {
-  if (!nuveiWebSDK) return alert('Initialize SDK first');
+      log('Submitting payment...');
 
-  console.log('Preparing payment. Debug fields:');
-  console.log('CC Number field object:', window.debugFields.cardNumber);
-  console.log('CC Expiration field object:', window.debugFields.cardExpiry);
-  console.log('CC CVC field object:', window.debugFields.cardCvc);
-
-  nuveiWebSDK.payment({
-    paymentOption: {
-      card: {
-        cardHolderName: document.getElementById('cardHolderName').value
-      }
-    },
-    useFields: ['ccNumber', 'ccExpiration', 'ccCvc'] // must exactly match created fields
-  })
-  .then(res => console.log('Payment response:', res))
-  .catch(err => console.error('Payment error:', err));
-}
-</script>
+      nuveiWebSDK.payment({
+        paymentOption: {
+          card: {
+            cardHolderName: document.getElementById('cardHolderName').value
+          }
+        },
+        useFields: ['ccNumber', 'ccExpiration', 'ccCvc']
+      })
+      .then(res => log('Payment response: ' + JSON.stringify(res)))
+      .catch(err => log('Payment error: ' + JSON.stringify(err)));
+    });
+  </script>
 
 </body>
 </html>

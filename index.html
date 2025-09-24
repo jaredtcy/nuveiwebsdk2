@@ -2,83 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Nuvei WebSDK 2.0 – Manual Session Test</title>
+  <title>Nuvei WebSDK 2.0 – Test</title>
   <script src="https://cdn.safecharge.com/safecharge_resources/v1/websdk/websdk2.0.js"></script>
   <style>
-    body { font-family: sans-serif; max-width: 500px; margin: 30px auto; }
-    .input { border: 1px solid #ccc; padding: 6px; min-height: 32px; }
+    .input { border:1px solid #ccc; padding:6px; min-height:32px; margin:4px 0; }
     label { display:block; margin-top:12px; }
-    button { margin-top:20px; padding:8px 16px; }
+    button { margin-top:12px; padding:6px 12px; }
   </style>
 </head>
 <body>
+  <h3>Nuvei WebSDK 2.0 Test</h3>
 
-  <h2>Nuvei WebSDK 2.0 Test</h2>
-
-  <label>Session ID (from /orders)
-    <input type="text" id="sessionId" placeholder="paste sessionId here">
+  <label>Session ID:
+    <input id="sessionId" placeholder="paste sessionId">
   </label>
 
-  <label>Card Holder Name
-    <input type="text" id="cardHolderName" value="CL-BRW1">
+  <label>Cardholder Name:
+    <input id="holder" value="CL-BRW1">
   </label>
 
-  <label>Card Number
-    <div id="card-number" class="input"></div>
-  </label>
-
-  <label>Expiration Date
-    <div id="card-expiry" class="input"></div>
-  </label>
-
-  <label>CVV
-    <div id="card-cvc" class="input"></div>
-  </label>
+  <div id="number" class="input"></div>
+  <div id="exp" class="input"></div>
+  <div id="cvc" class="input"></div>
 
   <button onclick="initSDK()">Init SDK</button>
-  <button onclick="payment()">Submit Payment</button>
+  <button onclick="pay()">Submit Payment</button>
 
   <script>
-    let nuveiWebSDK;
+    let sdk;
 
     function initSDK() {
-      const sId = document.getElementById('sessionId').value.trim();
-      if (!sId) return alert('Paste a sessionId first');
+      const sessionId = document.getElementById('sessionId').value.trim();
+      if (!sessionId) return alert('Paste a sessionId first');
 
-      nuveiWebSDK = webSDK({
-        env: 'int',            // sandbox environment
-        sessionId: sId,
-        support19Digits: true,
-        alwaysCollectCvv: 'optional',
-        onResult: res => console.log('onResult callback:', res)
+      sdk = webSDK({
+        env: 'int', // sandbox
+        sessionId: sessionId,
+        onResult: res => console.log('onResult callback', res)
       });
 
-      const nuveiFields = nuveiWebSDK.fields({ locale: 'US' });
-      const fieldClasses = { base: 'input' };
+      const fields = sdk.fields();
 
-      nuveiFields.create('ccNumber',     { classes: fieldClasses }).attach('#card-number');
-      nuveiFields.create('ccExpiration', { classes: fieldClasses }).attach('#card-expiry'); // ✅ correct name
-      nuveiFields.create('ccCvc',        { classes: fieldClasses }).attach('#card-cvc');
+      // Attach Fields 2.0
+      fields.create('ccNumber').attach('#number');
+      fields.create('ccExpiration').attach('#exp'); // must be 'ccExpiration'
+      fields.create('ccCvc').attach('#cvc');        // must be 'ccCvc'
 
-      console.log('Nuvei SDK initialized with session:', sId);
+      console.log('SDK initialized with session:', sessionId);
     }
 
-    function payment() {
-      if (!nuveiWebSDK) return alert('Initialize SDK first');
+    function pay() {
+      if (!sdk) return alert('Initialize SDK first');
 
-      nuveiWebSDK.payment({
+      sdk.payment({
         paymentOption: {
           card: {
-            cardHolderName: document.getElementById('cardHolderName').value
+            cardHolderName: document.getElementById('holder').value
           }
         },
-        // ✅ match the field keys used above
+        // These keys must match the fields above exactly
         useFields: ['ccNumber', 'ccExpiration', 'ccCvc']
       })
-      .then(res => console.log('Payment response:', res))
-      .catch(err => console.error('Payment error:', err));
+      .then(res => console.log('Payment response', res))
+      .catch(err => console.error('Payment error', err));
     }
   </script>
-
 </body>
 </html>

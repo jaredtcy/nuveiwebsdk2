@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Nuvei WebSDK 2.0 – Manual Session Test</title>
+  <title>Nuvei WebSDK 2.0 – Manual Session Test (Force Submit)</title>
   <script src="https://cdn.safecharge.com/safecharge_resources/v1/websdk/websdk2.0.js"></script>
   <style>
     body { font-family: sans-serif; max-width: 500px; margin: 30px auto; }
@@ -10,18 +10,19 @@
     label { display:block; margin-top:12px; }
     button { margin-top:12px; padding:8px 16px; cursor:pointer; }
     #logs { margin-top:20px; font-size:14px; white-space:pre-wrap; background:#f9f9f9; padding:10px; border:1px solid #ddd; }
+    .error { color:red; }
   </style>
 </head>
 <body>
 
-<h2>Nuvei WebSDK 2.0 Test</h2>
+<h2>Nuvei WebSDK 2.0 Test – Force Payment</h2>
 
 <label>Session ID (from /orders)
   <input type="text" id="sessionId" placeholder="Paste sessionId here" style="width:100%; padding:6px;">
 </label>
 
 <label>Card Holder Name
-  <input type="text" id="cardHolderName" value="CL-BRW1" style="width:100%; padding:6px;">
+  <input type="text" id="cardHolderName" value="Test User" style="width:100%; padding:6px;">
 </label>
 
 <label>Card Number
@@ -46,9 +47,10 @@ let nuveiWebSDK;
 let debugFields = {};
 const logDiv = document.getElementById('logs');
 
-function log(msg) {
+function log(msg, isError=false) {
   console.log(msg);
   logDiv.textContent += msg + "\n";
+  if(isError) logDiv.classList.add('error');
 }
 
 // Initialize SDK and fields
@@ -59,7 +61,7 @@ document.getElementById('initBtn').addEventListener('click', () => {
   log('Initializing Nuvei SDK with session: ' + sessionId);
 
   nuveiWebSDK = webSDK({
-    env: 'int', // or 'prod' for production
+    env: 'int', // change to 'prod' for production
     sessionId: sessionId,
     debug: true,
     onResult: res => log('onResult callback: ' + JSON.stringify(res))
@@ -86,16 +88,11 @@ document.getElementById('initBtn').addEventListener('click', () => {
   document.getElementById('submitBtn').disabled = false;
 });
 
-// Submit payment
+// Submit payment with force
 document.getElementById('submitBtn').addEventListener('click', () => {
   if (!nuveiWebSDK) return alert('Initialize SDK first');
 
-  log('Submitting payment...');
-  console.log('Field states at payment:', {
-    ccNumber: debugFields.cardNumber.getState(),
-    ccExpiration: debugFields.cardExpiry.getState(),
-    ccCvc: debugFields.cardCvc.getState()
-  });
+  log('Submitting payment with force...');
 
   nuveiWebSDK.payment({
     paymentOption: {
@@ -103,10 +100,11 @@ document.getElementById('submitBtn').addEventListener('click', () => {
         cardHolderName: document.getElementById('cardHolderName').value
       }
     },
-    useFields: 'ccNumber' // required to use SDK-collected card fields
+    useFields: 'ccNumber',
+    force: true // bypass validation warnings
   })
   .then(res => log('Payment response: ' + JSON.stringify(res)))
-  .catch(err => log('Payment error: ' + JSON.stringify(err)));
+  .catch(err => log('Payment error: ' + JSON.stringify(err), true));
 });
 </script>
 

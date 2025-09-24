@@ -2,15 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Nuvei WebSDK 2.0 – Manual Session Test (Force Submit)</title>
+  <title>Nuvei WebSDK 2.0 – Manual Session Test</title>
   <script src="https://cdn.safecharge.com/safecharge_resources/v1/websdk/websdk2.0.js"></script>
   <style>
     body { font-family: sans-serif; max-width: 500px; margin: 30px auto; }
     .input { border: 1px solid #ccc; padding: 6px; min-height: 32px; margin:4px 0; }
     label { display:block; margin-top:12px; }
     button { margin-top:12px; padding:8px 16px; cursor:pointer; }
-    #logs { margin-top:20px; font-size:14px; white-space:pre-wrap; background:#f9f9f9; padding:10px; border:1px solid #ddd; }
-    .error { color:red; }
   </style>
 </head>
 <body>
@@ -40,31 +38,19 @@
 <button id="initBtn">Init SDK</button>
 <button id="submitBtn" disabled>Submit Payment</button>
 
-<div id="logs"></div>
-
 <script>
 let nuveiWebSDK;
 let debugFields = {};
-const logDiv = document.getElementById('logs');
-
-function log(msg, isError=false) {
-  console.log(msg);
-  logDiv.textContent += msg + "\n";
-  if(isError) logDiv.classList.add('error');
-}
 
 // Initialize SDK and fields
 document.getElementById('initBtn').addEventListener('click', () => {
   const sessionId = document.getElementById('sessionId').value.trim();
   if (!sessionId) return alert('Paste a sessionId first');
 
-  log('Initializing Nuvei SDK with session: ' + sessionId);
-
   nuveiWebSDK = webSDK({
-    env: 'int', // change to 'prod' for production
+    env: 'int',
     sessionId: sessionId,
-    debug: true,
-    onResult: res => log('onResult callback: ' + JSON.stringify(res))
+    debug: true
   });
 
   const fields = nuveiWebSDK.fields({ locale: 'US', alwaysCollectCvv: 'optional' });
@@ -79,20 +65,12 @@ document.getElementById('initBtn').addEventListener('click', () => {
   debugFields.cardCvc = fields.create('ccCvc', { classes: fieldClasses });
   debugFields.cardCvc.attach('#card-cvc');
 
-  // Log field changes
-  Object.values(debugFields).forEach(field => {
-    field.on('change', state => log(`${state.field} change: ${JSON.stringify(state)}`));
-  });
-
-  log('SDK initialized. Submit button is now enabled.');
   document.getElementById('submitBtn').disabled = false;
 });
 
-// Submit payment with force
+// Submit payment and redirect to result page
 document.getElementById('submitBtn').addEventListener('click', () => {
   if (!nuveiWebSDK) return alert('Initialize SDK first');
-
-  log('Submitting payment with force...');
 
   nuveiWebSDK.payment({
     paymentOption: {
@@ -101,10 +79,19 @@ document.getElementById('submitBtn').addEventListener('click', () => {
       }
     },
     useFields: 'ccNumber',
-    force: true // bypass validation warnings
+    force: true
   })
-  .then(res => log('Payment response: ' + JSON.stringify(res)))
-  .catch(err => log('Payment error: ' + JSON.stringify(err), true));
+  .then(res => {
+    // Save response in localStorage
+    localStorage.setItem('paymentResponse', JSON.stringify(res));
+    // Redirect to result page
+    window.location.href = 'payment-result.html';
+  })
+  .catch(err => {
+    // Save error in localStorage
+    localStorage.setItem('paymentResponse', JSON.stringify(err));
+    window.location.href = 'payment-result.html';
+  });
 });
 </script>
 

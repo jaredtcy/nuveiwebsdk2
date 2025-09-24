@@ -37,7 +37,7 @@
 </label>
 
 <button id="initBtn">Init SDK</button>
-<button id="submitBtn" disabled>Submit Payment</button>
+<button id="submitBtn">Submit Payment</button>
 
 <div id="logs"></div>
 
@@ -82,23 +82,10 @@ document.getElementById('initBtn').addEventListener('click', () => {
     field.on('change', state => log(`${state.field} change: ${JSON.stringify(state)}`));
   });
 
-  log('SDK initialized. Waiting for all fields to be complete...');
+  log('SDK initialized. Submit button is now enabled for testing.');
 
-  // Poll every 100ms to enable submit button once all fields are complete
-  const submitBtn = document.getElementById('submitBtn');
-  const interval = setInterval(() => {
-    const states = {
-      ccNumber: debugFields.cardNumber.getState(),
-      ccExpiration: debugFields.cardExpiry.getState(),
-      ccCvc: debugFields.cardCvc.getState()
-    };
-
-    if (states.ccNumber?.complete && states.ccExpiration?.complete && states.ccCvc?.complete) {
-      submitBtn.disabled = false;
-      log('All fields complete. Submit button enabled.');
-      clearInterval(interval);
-    }
-  }, 100);
+  // Force-enable Submit button (bypass complete validation)
+  document.getElementById('submitBtn').disabled = false;
 });
 
 // Submit payment

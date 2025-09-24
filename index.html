@@ -54,23 +54,7 @@ function log(msg) {
   logDiv.textContent += msg + "\n";
 }
 
-// Check if all fields are complete
-function allFieldsComplete() {
-  return debugFields.cardNumber?.getState().complete &&
-         debugFields.cardExpiry?.getState().complete &&
-         debugFields.cardCvc?.getState().complete;
-}
-
-// Update submit button with slight delay to ensure SDK stabilized field states
-function updateSubmitButton() {
-  setTimeout(() => {
-    const enabled = allFieldsComplete();
-    document.getElementById('submitBtn').disabled = !enabled;
-    if (enabled) log('All fields complete. Submit button enabled.');
-  }, 50); // 50ms delay
-}
-
-// Initialize SDK
+// Initialize SDK and fields
 document.getElementById('initBtn').addEventListener('click', () => {
   const sessionId = document.getElementById('sessionId').value.trim();
   if (!sessionId) return alert('Paste a sessionId first');
@@ -87,48 +71,48 @@ document.getElementById('initBtn').addEventListener('click', () => {
   const fields = nuveiWebSDK.fields({ locale: 'US' });
   const fieldClasses = { base: 'input' };
 
-  // Create fields
   debugFields.cardNumber = fields.create('ccNumber', { classes: fieldClasses });
   debugFields.cardNumber.attach('#card-number');
-  debugFields.cardNumber.on('change', state => {
-    log('ccNumber change: ' + JSON.stringify(state));
-    updateSubmitButton();
-  });
 
   debugFields.cardExpiry = fields.create('ccExpiration', { classes: fieldClasses });
   debugFields.cardExpiry.attach('#card-expiry');
-  debugFields.cardExpiry.on('change', state => {
-    log('ccExpiration change: ' + JSON.stringify(state));
-    updateSubmitButton();
-  });
 
   debugFields.cardCvc = fields.create('ccCvc', { classes: fieldClasses });
   debugFields.cardCvc.attach('#card-cvc');
-  debugFields.cardCvc.on('change', state => {
-    log('ccCvc change: ' + JSON.stringify(state));
-    updateSubmitButton();
+
+  // Log every field change
+  Object.values(debugFields).forEach(field => {
+    field.on('change', state => log(`${state.field} change: ${JSON.stringify(state)}`));
   });
 
-  // Log field objects
-  console.log('cardNumber:', debugFields.cardNumber);
-  console.log('cardExpiry:', debugFields.cardExpiry);
-  console.log('cardCvc:', debugFields.cardCvc);
-
-  log('SDK initialized. Submit button will enable once all fields are complete.');
+  log('SDK initialized. Waiting for all fields to be complete...');
+  
+  // Poll every 200ms to enable submit button once all fields are complete
+  const submitBtn = document.getElementById('submitBtn');
+  const interval = setInterval(() => {
+    const states = {
+      ccNumber: debugFields.cardNumber.getState(),
+      ccExpiration: debugFields.cardExpiry.getState(),
+      ccCvc: debugFields.cardCvc.getState()
+    };
+    if (states.ccNumber.complete && states.ccExpiration.complete && states.ccCvc.complete) {
+      submitBtn.disabled = false;
+      log('All fields complete. Submit button enabled.');
+      clearInterval(interval);
+    }
+  }, 200);
 });
 
 // Submit payment
 document.getElementById('submitBtn').addEventListener('click', () => {
   if (!nuveiWebSDK) return alert('Initialize SDK first');
 
-  // Log field states at payment
+  log('Submitting payment...');
   console.log('Field states at payment:', {
     ccNumber: debugFields.cardNumber.getState(),
     ccExpiration: debugFields.cardExpiry.getState(),
     ccCvc: debugFields.cardCvc.getState()
   });
-
-  log('Submitting payment...');
 
   nuveiWebSDK.payment({
     paymentOption: {
@@ -136,7 +120,7 @@ document.getElementById('submitBtn').addEventListener('click', () => {
         cardHolderName: document.getElementById('cardHolderName').value
       }
     },
-    useFields: ['ccNumber', 'ccExpiration', 'ccCvc'] // exact field keys
+    useFields: ['ccNumber', 'ccExpirationDate', 'ccCvc'] // Correct keys
   })
   .then(res => log('Payment response: ' + JSON.stringify(res)))
   .catch(err => log('Payment error: ' + JSON.stringify(err)));

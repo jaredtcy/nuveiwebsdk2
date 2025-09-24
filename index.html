@@ -54,6 +54,16 @@
       logDiv.textContent += msg + "\n";
     }
 
+    function allFieldsComplete() {
+      return debugFields.cardNumber?.getState().complete &&
+             debugFields.cardExpiry?.getState().complete &&
+             debugFields.cardCvc?.getState().complete;
+    }
+
+    function updateSubmitButton() {
+      document.getElementById('submitBtn').disabled = !allFieldsComplete();
+    }
+
     // Init SDK
     document.getElementById('initBtn').addEventListener('click', () => {
       const sessionId = document.getElementById('sessionId').value.trim();
@@ -74,30 +84,43 @@
       // Create and attach fields
       debugFields.cardNumber = fields.create('ccNumber', { classes: fieldClasses });
       debugFields.cardNumber.attach('#card-number');
-      debugFields.cardNumber.on('change', state => log('ccNumber change: ' + JSON.stringify(state)));
+      debugFields.cardNumber.on('change', state => {
+        log('ccNumber change: ' + JSON.stringify(state));
+        updateSubmitButton();
+      });
 
       debugFields.cardExpiry = fields.create('ccExpiration', { classes: fieldClasses });
       debugFields.cardExpiry.attach('#card-expiry');
-      debugFields.cardExpiry.on('change', state => log('ccExpiration change: ' + JSON.stringify(state)));
+      debugFields.cardExpiry.on('change', state => {
+        log('ccExpiration change: ' + JSON.stringify(state));
+        updateSubmitButton();
+      });
 
       debugFields.cardCvc = fields.create('ccCvc', { classes: fieldClasses });
       debugFields.cardCvc.attach('#card-cvc');
-      debugFields.cardCvc.on('change', state => log('ccCvc change: ' + JSON.stringify(state)));
+      debugFields.cardCvc.on('change', state => {
+        log('ccCvc change: ' + JSON.stringify(state));
+        updateSubmitButton();
+      });
 
-      // Log the field objects for debugging
-      log('Debug field objects:');
+      // Log field objects for debugging
       console.log('cardNumber:', debugFields.cardNumber);
       console.log('cardExpiry:', debugFields.cardExpiry);
       console.log('cardCvc:', debugFields.cardCvc);
 
-      // Enable Submit button
-      document.getElementById('submitBtn').disabled = false;
-      log('SDK initialized. Submit button enabled.');
+      log('SDK initialized. Submit button will enable once all fields are complete.');
     });
 
     // Payment
     document.getElementById('submitBtn').addEventListener('click', () => {
       if (!nuveiWebSDK) return alert('Initialize SDK first');
+
+      // Log field states at the moment of payment
+      console.log('Field states at payment:', {
+        ccNumber: debugFields.cardNumber.getState(),
+        ccExpiration: debugFields.cardExpiry.getState(),
+        ccCvc: debugFields.cardCvc.getState()
+      });
 
       log('Submitting payment...');
 
@@ -107,8 +130,7 @@
             cardHolderName: document.getElementById('cardHolderName').value
           }
         },
-        // Correct internal field names
-        useFields: ['ccNumber', 'ccExpirationDate', 'ccCvc']
+        useFields: ['ccNumber', 'ccExpiration', 'ccCvc'] // exact field keys
       })
       .then(res => log('Payment response: ' + JSON.stringify(res)))
       .catch(err => log('Payment error: ' + JSON.stringify(err)));

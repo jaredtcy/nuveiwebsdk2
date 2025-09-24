@@ -37,7 +37,7 @@
 </label>
 
 <button id="initBtn">Init SDK</button>
-<button id="submitBtn">Submit Payment</button>
+<button id="submitBtn" disabled>Submit Payment</button>
 
 <div id="logs"></div>
 
@@ -59,7 +59,7 @@ document.getElementById('initBtn').addEventListener('click', () => {
   log('Initializing Nuvei SDK with session: ' + sessionId);
 
   nuveiWebSDK = webSDK({
-    env: 'int',
+    env: 'int', // or 'prod' for production
     sessionId: sessionId,
     debug: true,
     onResult: res => log('onResult callback: ' + JSON.stringify(res))
@@ -77,14 +77,12 @@ document.getElementById('initBtn').addEventListener('click', () => {
   debugFields.cardCvc = fields.create('ccCvc', { classes: fieldClasses });
   debugFields.cardCvc.attach('#card-cvc');
 
-  // Log every field change
+  // Log field changes
   Object.values(debugFields).forEach(field => {
     field.on('change', state => log(`${state.field} change: ${JSON.stringify(state)}`));
   });
 
-  log('SDK initialized. Submit button is now enabled for testing.');
-
-  // Force-enable Submit button (bypass complete validation)
+  log('SDK initialized. Submit button is now enabled.');
   document.getElementById('submitBtn').disabled = false;
 });
 
@@ -105,7 +103,7 @@ document.getElementById('submitBtn').addEventListener('click', () => {
         cardHolderName: document.getElementById('cardHolderName').value
       }
     },
-    useFields: 'ccNumber' // only this is needed
+    useFields: 'ccNumber' // required to use SDK-collected card fields
   })
   .then(res => log('Payment response: ' + JSON.stringify(res)))
   .catch(err => log('Payment error: ' + JSON.stringify(err)));

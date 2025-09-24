@@ -65,24 +65,12 @@ document.getElementById('initBtn').addEventListener('click', () => {
   debugFields.cardCvc = fields.create('ccCvc', { classes: fieldClasses });
   debugFields.cardCvc.attach('#card-cvc');
 
-  // Log field changes to console
-  Object.values(debugFields).forEach(field => {
-    field.on('change', state => console.log(`${state.field} change:`, state));
-  });
-
   document.getElementById('submitBtn').disabled = false;
 });
 
 // Submit payment and redirect to result page
 document.getElementById('submitBtn').addEventListener('click', () => {
   if (!nuveiWebSDK) return alert('Initialize SDK first');
-
-  // Log field states before payment
-  console.log('Submitting payment with field states:', {
-    ccNumber: debugFields.cardNumber.getState(),
-    ccExpiration: debugFields.cardExpiry.getState(),
-    ccCvc: debugFields.cardCvc.getState()
-  });
 
   nuveiWebSDK.payment({
     paymentOption: {
@@ -94,12 +82,13 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     force: true
   })
   .then(res => {
-    console.log('Payment response:', res);
+    // Save response in localStorage
     localStorage.setItem('paymentResponse', JSON.stringify(res));
+    // Redirect to result page
     window.location.href = 'payment-result.html';
   })
   .catch(err => {
-    console.error('Payment error:', err);
+    // Save error in localStorage
     localStorage.setItem('paymentResponse', JSON.stringify(err));
     window.location.href = 'payment-result.html';
   });

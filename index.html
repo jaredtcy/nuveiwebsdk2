@@ -48,7 +48,7 @@
 
       // Instantiate WebSDK 2.0
       nuveiWebSDK = webSDK({
-        env: 'int', // sandbox environment
+        env: 'int', // sandbox
         sessionId: sId,
         support19Digits: true,
         alwaysCollectCvv: 'optional',
@@ -74,14 +74,15 @@
     function payment() {
       if (!nuveiWebSDK) return alert('Initialize SDK first');
 
+      // NOTE: useFields must match the internal keys Nuvei expects:
+      //       ccNumber, ccExpirationDate, ccCvc
       nuveiWebSDK.payment({
         paymentOption: {
           card: {
             cardHolderName: document.getElementById('cardHolderName').value
           }
         },
-        // These keys must match the names used in nuveiFields.create()
-        useFields: ['ccNumber', 'ccExpiration', 'ccCvc']
+        useFields: ['ccNumber', 'ccExpirationDate', 'ccCvc']
       })
       .then(res => console.log('Payment response:', res))
       .catch(err => console.error('Payment error:', err));

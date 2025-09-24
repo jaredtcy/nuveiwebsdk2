@@ -15,7 +15,7 @@
 
   <h2>Nuvei WebSDK 2.0 Test</h2>
 
-  <!-- Enter the sessionId you got from POST /orders -->
+  <!-- Paste the sessionId you got from POST /orders -->
   <label>Session ID (from /orders)
     <input type="text" id="sessionId" placeholder="paste sessionId here">
   </label>
@@ -48,14 +48,14 @@
 
       // Instantiate WebSDK 2.0
       nuveiWebSDK = webSDK({
-        env: 'int',                    // 'int' = sandbox
+        env: 'int', // sandbox environment
         sessionId: sId,
         support19Digits: true,
         alwaysCollectCvv: 'optional',
         onResult: res => console.log('onResult callback:', res)
       });
 
-      // Activate Fields 2.0
+      // Activate Nuvei Fields 2.0
       const nuveiFields = nuveiWebSDK.fields({ locale: 'US' });
       const fieldClasses = { base: 'input' };
 
@@ -80,6 +80,7 @@
             cardHolderName: document.getElementById('cardHolderName').value
           }
         },
+        // These keys must match the names used in nuveiFields.create()
         useFields: ['ccNumber', 'ccExpiration', 'ccCvc']
       })
       .then(res => console.log('Payment response:', res))

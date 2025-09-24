@@ -15,7 +15,6 @@
 
   <h2>Nuvei WebSDK 2.0 Test</h2>
 
-  <!-- Paste the sessionId you got from POST /orders -->
   <label>Session ID (from /orders)
     <input type="text" id="sessionId" placeholder="paste sessionId here">
   </label>
@@ -46,27 +45,20 @@
       const sId = document.getElementById('sessionId').value.trim();
       if (!sId) return alert('Paste a sessionId first');
 
-      // Instantiate WebSDK 2.0
       nuveiWebSDK = webSDK({
-        env: 'int', // sandbox
+        env: 'int',            // sandbox environment
         sessionId: sId,
         support19Digits: true,
         alwaysCollectCvv: 'optional',
         onResult: res => console.log('onResult callback:', res)
       });
 
-      // Activate Nuvei Fields 2.0
       const nuveiFields = nuveiWebSDK.fields({ locale: 'US' });
       const fieldClasses = { base: 'input' };
 
-      const cardNumber = nuveiFields.create('ccNumber', { classes: fieldClasses });
-      cardNumber.attach('#card-number');
-
-      const cardExpiry = nuveiFields.create('ccExpiration', { classes: fieldClasses });
-      cardExpiry.attach('#card-expiry');
-
-      const cardCvc = nuveiFields.create('ccCvc', { classes: fieldClasses });
-      cardCvc.attach('#card-cvc');
+      nuveiFields.create('ccNumber',     { classes: fieldClasses }).attach('#card-number');
+      nuveiFields.create('ccExpiration', { classes: fieldClasses }).attach('#card-expiry'); // ✅ correct name
+      nuveiFields.create('ccCvc',        { classes: fieldClasses }).attach('#card-cvc');
 
       console.log('Nuvei SDK initialized with session:', sId);
     }
@@ -74,15 +66,14 @@
     function payment() {
       if (!nuveiWebSDK) return alert('Initialize SDK first');
 
-      // NOTE: useFields must match the internal keys Nuvei expects:
-      //       ccNumber, ccExpirationDate, ccCvc
       nuveiWebSDK.payment({
         paymentOption: {
           card: {
             cardHolderName: document.getElementById('cardHolderName').value
           }
         },
-        useFields: ['ccNumber', 'ccExpirationDate', 'ccCvc']
+        // ✅ match the field keys used above
+        useFields: ['ccNumber', 'ccExpiration', 'ccCvc']
       })
       .then(res => console.log('Payment response:', res))
       .catch(err => console.error('Payment error:', err));

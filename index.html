@@ -118,7 +118,7 @@ document.getElementById('submitBtn').addEventListener('click', () => {
         cardHolderName: document.getElementById('cardHolderName').value
       }
     },
-    useFields: ['ccNumber', 'ccExpirationDate', 'ccCvc'] // Correct keys for payment
+    useFields: 'ccNumber' // only this is needed
   })
   .then(res => log('Payment response: ' + JSON.stringify(res)))
   .catch(err => log('Payment error: ' + JSON.stringify(err)));

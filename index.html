@@ -84,6 +84,12 @@
       debugFields.cardCvc.attach('#card-cvc');
       debugFields.cardCvc.on('change', state => log('ccCvc change: ' + JSON.stringify(state)));
 
+      // Log the field objects for debugging
+      log('Debug field objects:');
+      console.log('cardNumber:', debugFields.cardNumber);
+      console.log('cardExpiry:', debugFields.cardExpiry);
+      console.log('cardCvc:', debugFields.cardCvc);
+
       // Enable Submit button
       document.getElementById('submitBtn').disabled = false;
       log('SDK initialized. Submit button enabled.');
@@ -101,7 +107,8 @@
             cardHolderName: document.getElementById('cardHolderName').value
           }
         },
-        useFields: ['ccNumber', 'ccExpiration', 'ccCvc']
+        // Correct internal field names
+        useFields: ['ccNumber', 'ccExpirationDate', 'ccCvc']
       })
       .then(res => log('Payment response: ' + JSON.stringify(res)))
       .catch(err => log('Payment error: ' + JSON.stringify(err)));

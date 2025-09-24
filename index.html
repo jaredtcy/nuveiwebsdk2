@@ -50,28 +50,30 @@ function initSDK() {
   nuveiWebSDK = webSDK({
     env: 'int',
     sessionId: sId,
-    debug: true, // enable verbose logging
+    debug: true, // verbose logging
     onResult: res => console.log('onResult callback:', res)
   });
 
   const nuveiFields = nuveiWebSDK.fields({ locale: 'US' });
   const fieldClasses = { base: 'input' };
 
-  // Create fields and attach
+  // Create fields
   const cardNumber = nuveiFields.create('ccNumber', { classes: fieldClasses });
-  cardNumber.attach('#card-number');
-
   const cardExpiry = nuveiFields.create('ccExpiration', { classes: fieldClasses });
-  cardExpiry.attach('#card-expiry');
-
   const cardCvc = nuveiFields.create('ccCvc', { classes: fieldClasses });
+
+  // Attach fields
+  cardNumber.attach('#card-number');
+  cardExpiry.attach('#card-expiry');
   cardCvc.attach('#card-cvc');
 
   // Save field references for debugging
   window.debugFields = { cardNumber, cardExpiry, cardCvc };
 
-  // Log field objects
-  console.log('Field instances created:', window.debugFields);
+  // Add change listeners to see input captured by SDK
+  cardNumber.on('change', state => console.log('ccNumber change event:', state));
+  cardExpiry.on('change', state => console.log('ccExpiration change event:', state));
+  cardCvc.on('change', state => console.log('ccCvc change event:', state));
 
   // Verify DOM attachment
   console.log('DOM elements after attach:');
@@ -88,20 +90,18 @@ function initSDK() {
 function payment() {
   if (!nuveiWebSDK) return alert('Initialize SDK first');
 
-  // Log current field states for debugging
-  console.log('Preparing to send payment. Field states:');
-  console.log('CC Number:', window.debugFields.cardNumber.getState());
-  console.log('CC Expiration:', window.debugFields.cardExpiry.getState());
-  console.log('CC CVC:', window.debugFields.cardCvc.getState());
+  console.log('Preparing payment. Debug fields:');
+  console.log('CC Number field object:', window.debugFields.cardNumber);
+  console.log('CC Expiration field object:', window.debugFields.cardExpiry);
+  console.log('CC CVC field object:', window.debugFields.cardCvc);
 
-  // Payment request
   nuveiWebSDK.payment({
     paymentOption: {
       card: {
         cardHolderName: document.getElementById('cardHolderName').value
       }
     },
-    useFields: ['ccNumber', 'ccExpiration', 'ccCvc'] // keys must match fields created
+    useFields: ['ccNumber', 'ccExpiration', 'ccCvc'] // must exactly match created fields
   })
   .then(res => console.log('Payment response:', res))
   .catch(err => console.error('Payment error:', err));

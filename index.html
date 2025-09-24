@@ -3,10 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Nuvei WebSDK 2.0 – Manual Session Test</title>
-  
-  <!-- Nuvei WebSDK 2.0 -->
   <script src="https://cdn.safecharge.com/safecharge_resources/v1/websdk/websdk2.0.js"></script>
-
   <style>
     body { font-family: sans-serif; max-width: 500px; margin: 30px auto; }
     .input { border: 1px solid #ccc; padding: 6px; min-height: 32px; margin:4px 0; }
@@ -68,7 +65,7 @@ document.getElementById('initBtn').addEventListener('click', () => {
     onResult: res => log('onResult callback: ' + JSON.stringify(res))
   });
 
-  const fields = nuveiWebSDK.fields({ locale: 'US' });
+  const fields = nuveiWebSDK.fields({ locale: 'US', alwaysCollectCvv: 'optional' });
   const fieldClasses = { base: 'input' };
 
   debugFields.cardNumber = fields.create('ccNumber', { classes: fieldClasses });
@@ -86,8 +83,8 @@ document.getElementById('initBtn').addEventListener('click', () => {
   });
 
   log('SDK initialized. Waiting for all fields to be complete...');
-  
-  // Poll every 200ms to enable submit button once all fields are complete
+
+  // Poll every 100ms to enable submit button once all fields are complete
   const submitBtn = document.getElementById('submitBtn');
   const interval = setInterval(() => {
     const states = {
@@ -95,12 +92,13 @@ document.getElementById('initBtn').addEventListener('click', () => {
       ccExpiration: debugFields.cardExpiry.getState(),
       ccCvc: debugFields.cardCvc.getState()
     };
-    if (states.ccNumber.complete && states.ccExpiration.complete && states.ccCvc.complete) {
+
+    if (states.ccNumber?.complete && states.ccExpiration?.complete && states.ccCvc?.complete) {
       submitBtn.disabled = false;
       log('All fields complete. Submit button enabled.');
       clearInterval(interval);
     }
-  }, 200);
+  }, 100);
 });
 
 // Submit payment
@@ -120,7 +118,7 @@ document.getElementById('submitBtn').addEventListener('click', () => {
         cardHolderName: document.getElementById('cardHolderName').value
       }
     },
-    useFields: ['ccNumber', 'ccExpirationDate', 'ccCvc'] // Correct keys
+    useFields: ['ccNumber', 'ccExpirationDate', 'ccCvc'] // Correct keys for payment
   })
   .then(res => log('Payment response: ' + JSON.stringify(res)))
   .catch(err => log('Payment error: ' + JSON.stringify(err)));

@@ -82,13 +82,18 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     force: true
   })
   .then(res => {
-    // Save response in localStorage
+    // ➤ Print success response to console
+    console.log('Nuvei payment success:', res);
+
+    // Save response in localStorage and redirect
     localStorage.setItem('paymentResponse', JSON.stringify(res));
-    // Redirect to result page
     window.location.href = 'payment-result.html';
   })
   .catch(err => {
-    // Save error in localStorage
+    // ➤ Print error response to console
+    console.error('Nuvei payment error:', err);
+
+    // Save error in localStorage and redirect
     localStorage.setItem('paymentResponse', JSON.stringify(err));
     window.location.href = 'payment-result.html';
   });
